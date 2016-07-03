@@ -1,6 +1,6 @@
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -79,15 +79,18 @@ char *process_chunk(lua_State *L, const char *chunk) {
    return c;
 }
 
+void init(lua_State *L) {
+   lua_pushcfunction(L, stringifier_LuaCB);
+   lua_setfield(L, LUA_REGISTRYINDEX, stringifier);
+}
 
 int main(void) {
    lua_State *L = luaL_newstate();
    luaL_openlibs(L);
+   init(L);
+
    size_t buf_size;
    char buf[1024];
-
-   lua_pushcfunction(L, stringifier_LuaCB);
-   lua_setfield(L, LUA_REGISTRYINDEX, stringifier);
 
    while (1) {
       printf("lua> ");
