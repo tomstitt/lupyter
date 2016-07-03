@@ -47,6 +47,11 @@ int stringifier_LuaCB(lua_State *L) {
 
 char *process_chunk(lua_State *L, const char *chunk) {
    char *c = NULL;
+   // safety
+   if (1) {
+      lua_getfield(L, LUA_REGISTRYINDEX, stringifier);
+      lua_setglobal(L, stringifier);
+   }
    lua_pushfstring(L, "%s(%s)", stringifier, chunk);
    luaL_loadstring(L, lua_tostring(L, -1));
    if (lua_pcall(L, 0, 1, 0) != 0) {
@@ -82,8 +87,7 @@ int main(void) {
    char buf[1024];
 
    lua_pushcfunction(L, stringifier_LuaCB);
-   lua_setglobal(L, stringifier);
-   //lua_setfield(L, LUA_REGISTRYINDEX, stringifier);
+   lua_setfield(L, LUA_REGISTRYINDEX, stringifier);
 
    while (1) {
       printf("lua> ");
