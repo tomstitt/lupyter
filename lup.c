@@ -9,7 +9,6 @@
 const char *stringified = "stringified_arguments";
 const char *stringifier = "stringify_argument_list";
 
-
 int stringifier_LuaCB(lua_State *L) {
    luaL_Buffer B;
    luaL_buffinit(L, &B);
@@ -89,12 +88,12 @@ int main(void) {
    luaL_openlibs(L);
    init(L);
 
-   size_t buf_size;
-   char buf[1024];
+   size_t buf_size = 1024;
+   char buf[buf_size];
 
    while (1) {
       printf("lua> ");
-      gets(buf);
+      fgets(buf, buf_size, stdin);
       char *r = process_chunk(L, buf);
       if (r) printf("%s\n", r);
       free(r);
