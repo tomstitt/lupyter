@@ -6,10 +6,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-const char *stringify = "stringify_args";
+const char *stringified = "stringified_arguments";
+const char *stringifier = "stringify_argument_list";
 
 
-int stringify_args(lua_State *L) {
+int stringifier_LuaCB(lua_State *L) {
    luaL_Buffer B;
    luaL_buffinit(L, &B);
 
@@ -39,22 +40,19 @@ int stringify_args(lua_State *L) {
       }
    }
    luaL_pushresult(&B);
-   printf("tostring is: '%s'\n", lua_tostring(L, -1));
-   return 1;
+   lua_setfield(L, LUA_REGISTRYINDEX, stringified);
+   return 0;
 }
 
 
 char *process_chunk(lua_State *L, const char *chunk) {
    char *c = NULL;
-   lua_pushfstring(L, "%s(%s)", stringify, chunk);
+   lua_pushfstring(L, "%s(%s)", stringifier, chunk);
    luaL_loadstring(L, lua_tostring(L, -1));
    if (lua_pcall(L, 0, 1, 0) != 0) {
       lua_settop(L, 0);
       if (luaL_dostring(L, chunk) != 0) {
-         const char *error = lua_tostring(L, -1);
-         size_t error_len = strlen(error);
-         c = (char*)malloc(error_len * sizeof(char));
-         memcpy(c, error, error_len);
+         lua_setfield(L, LUA_REGISTRYINDEX, stringified);
       }
       else {
           // pass
@@ -62,16 +60,17 @@ char *process_chunk(lua_State *L, const char *chunk) {
           // to return?
       }
    }
-   else {
-      const char *res = lua_tostring(L, -1);
-      if (res != NULL) {
-         size_t res_len = strlen(res);
-         c = (char*)malloc(res_len + 1);
-         memcpy(c, res, res_len + 1);
-      }
-   }
    lua_settop(L, 0);
 
+   lua_getfield(L, LUA_REGISTRYINDEX, stringified);
+   if (!lua_isnil(L, -1)) {
+      lua_pushnil(L);
+      lua_setfield(L, LUA_REGISTRYINDEX, stringified);
+      const char *str = lua_tostring(L, -1);
+      size_t str_len = strlen(str);
+      c = (char*)malloc(str_len + 1);
+      memcpy(c, str, str_len + 1);
+   }
    return c;
 }
 
@@ -82,12 +81,15 @@ int main(void) {
    size_t buf_size;
    char buf[1024];
 
-   lua_register(L, stringify, stringify_args);
+   lua_pushcfunction(L, stringifier_LuaCB);
+   lua_setglobal(L, stringifier);
+   //lua_setfield(L, LUA_REGISTRYINDEX, stringifier);
+
    while (1) {
       printf("lua> ");
       gets(buf);
       char *r = process_chunk(L, buf);
-      printf("%s\n", r);
+      if (r) printf("%s\n", r);
       free(r);
    }
 
