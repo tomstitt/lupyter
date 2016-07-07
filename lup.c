@@ -38,6 +38,16 @@ int stringifier_LuaCB(lua_State *L) {
       }
    }
    luaL_pushresult(&B);
+   if (lua_isnil(L, -1)) return 0;
+   lua_getfield(L, LUA_REGISTRYINDEX, stringified);
+   if (!lua_isnil(L, -1)) {
+      lua_pushfstring(L, "%s\n%s", lua_tostring(L, -1), lua_tostring(L, -2));
+      lua_replace(L, -3);
+      lua_pop(L, 1);
+   }
+   else {
+      lua_pop(L, 1);
+   }
    lua_setfield(L, LUA_REGISTRYINDEX, stringified);
    return 0;
 }
@@ -57,14 +67,11 @@ char *process_chunk(lua_State *L, const char *chunk) {
       if (luaL_dostring(L, chunk) != 0) {
          lua_setfield(L, LUA_REGISTRYINDEX, stringified);
       }
-      else {
-          // pass
-          // is there anyway this could be a string
-          // to return?
-      }
    }
-   lua_settop(L, 0);
 
+   // here we grab the string out of the registry,
+   // copy it into a malloc char array, and nil out
+   // the registry.
    lua_getfield(L, LUA_REGISTRYINDEX, stringified);
    if (!lua_isnil(L, -1)) {
       lua_pushnil(L);
@@ -74,6 +81,7 @@ char *process_chunk(lua_State *L, const char *chunk) {
       c = (char*)malloc(str_len + 1);
       memcpy(c, str, str_len + 1);
    }
+   lua_settop(L, 0);
    return c;
 }
 
@@ -81,6 +89,8 @@ char *process_chunk(lua_State *L, const char *chunk) {
 void init(lua_State *L) {
    lua_pushcfunction(L, stringifier_LuaCB);
    lua_setfield(L, LUA_REGISTRYINDEX, stringifier);
+   lua_pushcfunction(L, stringifier_LuaCB);
+   lua_setglobal(L, "print");
 }
 
 
