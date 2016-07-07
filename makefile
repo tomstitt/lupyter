@@ -9,4 +9,4 @@ $(exe): $(exe).c
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf $(exe) $(exe).dSYM
+	rm -rf $(exe) $(exe).dSYM build

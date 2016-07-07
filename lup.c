@@ -1,13 +1,12 @@
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
+#include "lup.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
+/*
+ * Lua prompt handling
+ */
 const char *stringified = "stringified_arguments";
 const char *stringifier = "stringify_argument_list";
+
 
 int stringifier_LuaCB(lua_State *L) {
    luaL_Buffer B;
@@ -78,10 +77,12 @@ char *process_chunk(lua_State *L, const char *chunk) {
    return c;
 }
 
+
 void init(lua_State *L) {
    lua_pushcfunction(L, stringifier_LuaCB);
    lua_setfield(L, LUA_REGISTRYINDEX, stringifier);
 }
+
 
 int main(void) {
    lua_State *L = luaL_newstate();
