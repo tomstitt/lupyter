@@ -41,7 +41,12 @@ int stringifier_LuaCB(lua_State *L) {
    if (lua_isnil(L, -1)) return 0;
    lua_getfield(L, LUA_REGISTRYINDEX, stringified);
    if (!lua_isnil(L, -1)) {
-      lua_pushfstring(L, "%s\n%s", lua_tostring(L, -1), lua_tostring(L, -2));
+      const char *previous = lua_tostring(L, -1);
+      const char *current = lua_tostring(L, -2);
+      if (strcmp(current, "") == 0) {
+          return 0;
+      }
+      lua_pushfstring(L, "%s\n%s", previous, current);
       lua_replace(L, -3);
       lua_pop(L, 1);
    }
