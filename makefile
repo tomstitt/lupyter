@@ -1,12 +1,19 @@
-lua.root = ..
-exe = lup
-CFLAGS = -g -I$(lua.root)/src -L$(lua.root)/src -llua
-CC = gcc
+lua.root = ./lua/install
+exe = luaserver
+Cflags = -g
+Iflags = -I$(lua.root)/include
+Lflags = -L$(lua.root)/lib -llua
 
-.PHONY: clean
+CC = cc
 
-$(exe): $(exe).c
-	$(CC) $(CFLAGS) $< -o $@
+.PHONY: clean 
 
-clean:
-	rm -rf $(exe) $(exe).dSYM build
+source = $(shell $(find . -depth 1 -name "*.c"))
+
+objects = lup.o luaserver.o
+
+%.o: %.c; $(CC) $(Cflags) $(Iflags) -c $< -o $@
+
+$(exe): $(objects); $(CC) $(Cflags) $(Lflags) $^ -o $@
+
+clean: ;rm -rf $(exe) $(exe).dSYM *.o
