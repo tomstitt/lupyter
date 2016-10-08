@@ -10,10 +10,9 @@ Add the Jupyter Kernel:
 
     > jupyter kernelspec install ../lupyter
 
-*Unless you have luakernel.py in your python path make sure you run the 
-following in the same directory as this file.*
+**To use**
 
-Launch the console:
+Launch the console (quitting is weird use ctrl-z):
 
     > jupyter console --kernel lupyter
 
