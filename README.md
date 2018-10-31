@@ -1,21 +1,13 @@
-A Lua Kernel for iPython/Jupyter
+# A Lua Kernel for iPython/Jupyter
 
-Simple Lua Kernel + Prompt using python wrapped C.
+Lua Kernel using Python wrapper 
 
-Build the Python module:
+## Installing
 
-    > python setup.py install
+1) Python Module:
 
-Add the Jupyter Kernel:
+    > [env LUA_DIR=/path/to/your/lua] pip install .
+
+2) Jupyter Kernel Spec:
 
     > jupyter kernelspec install ../lupyter
-
-**To use**
-
-Launch the console (quitting is weird use ctrl-z):
-
-    > jupyter console --kernel lupyter
-
-Lanuch the browser:
-
-    > jupyter notebook
