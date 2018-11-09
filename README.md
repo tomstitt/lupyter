@@ -1,6 +1,6 @@
 # A Lua Kernel for iPython/Jupyter
 
-Lua Kernel using Python wrapper 
+Lua kernel using Python c-extension
 
 ## Installing
 
@@ -10,4 +10,4 @@ Lua Kernel using Python wrapper
 
 2) Jupyter Kernel Spec:
 
-    > jupyter kernelspec install ../lupyter
+    > jupyter kernelspec install ../lupyter [--user]
