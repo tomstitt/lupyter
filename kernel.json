@@ -1,4 +1,4 @@
 {
-    "argv": ["python", "-m", "lupyter.LuaKernel", "-f", "{connection_file}"],
+    "argv": ["python", "-m", "lupyter.luakernel", "-f", "{connection_file}"],
     "display_name": "Lua"
 }
