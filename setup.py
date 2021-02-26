@@ -14,9 +14,18 @@ prefer = "lua"
 
 if "LUA_DIR" in os.environ:
     lua_dir = os.environ["LUA_DIR"]
-
 if not os.path.exists(lua_dir):
     sys.exit(f"fatal: {lua_dir} doesn't exist, please set LUA_DIR to a Lua install root")
+
+
+def get_lua_release(path):
+    with open(path) as f:
+        version = re.findall(r"#define LUA_RELEASE.*\"Lua ([0-9\. ]+)", f.read())[0]
+    return version
+
+
+def get_kernel_name(name):
+    return name.lower().replace(" ", "_").replace(".", "_")
 
 
 def find_lua(root):
@@ -26,13 +35,11 @@ def find_lua(root):
         return None
     if not os.path.exists(os.path.join(libdir, "liblua.a")):
         return None
-    name = "Lua"
-    with open(os.path.join(include, "lua.h")) as f:
-        version = re.findall(r"#define LUA_RELEASE.*\"Lua ([0-9\. ]+)", f.read())[0]
-        name = "Lua " + version
+    version = get_lua_release(os.path.join(include, "lua.h"))
+    name = "Lua " + version
 
     return {"display_name": name,
-            "kernel_name": name.lower().replace(" ", "_").replace(".", "_"),
+            "kernel_name": get_kernel_name(name),
             "version": version,
             "include": include,
             "libdir": libdir,
@@ -62,7 +69,19 @@ def find_luajit(root):
     else:
         return None
 
-    return {"name": "luajit", "include": include, "libdir": libdir, "lib": lib}
+    lua_version = get_lua_release(os.path.join(include, "lua.h"))
+    name = "LuaJIT"
+    with open(os.path.join(include, "luajit.h")) as f:
+        luajit_version = re.findall(r"#define LUAJIT_VERSION.*\"LuaJIT ([0-9\. ]+)", f.read())[0]
+        name = "LuaJIT " + luajit_version
+
+    return {"display_name": name,
+            "kernel_name": get_kernel_name(name),
+            "version": lua_version,
+            "luajit_version": luajit_version,
+            "include": include,
+            "libdir": libdir,
+            "lib": lib}
 
 
 info = find_lua(lua_dir) or find_luajit(lua_dir)
@@ -75,7 +94,10 @@ else:
         print(f"  {k}: {v}")
 
 with open(os.path.join(distname, "versions.py"), "w") as f:
-    f.write(f'lua_version = "{info["version"]}"')
+    fstr = f'lua_version = "{info["version"]}"'
+    if "luajit_version" in info:
+        fstr += f'\nluajit_version = "{info["luajit_version"]}"'
+    f.write(fstr)
 
 lup_ext_mod = setuptools.Extension(f"{distname}.{interface_name}",
     sources=[f"{distname}/{interface_name}/lup.c"],
