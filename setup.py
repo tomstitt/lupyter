@@ -43,6 +43,7 @@ def find_lua(root):
             "version": version,
             "include": include,
             "libdir": libdir,
+            "static_lib_path": os.path.join(libdir, "liblua.a"),
             "lib": "lua"}
 
 
@@ -65,6 +66,7 @@ def find_luajit(root):
     for f in os.listdir(libdir):
         if fnmatch.fnmatch(f, "libluajit*.a"):
             lib = f[3:-2]
+            static_lib_path = os.path.join(libdir, f)
             break
     else:
         return None
@@ -81,6 +83,7 @@ def find_luajit(root):
             "luajit_version": luajit_version,
             "include": include,
             "libdir": libdir,
+            "static_lib_path": static_lib_path,
             "lib": lib}
 
 
@@ -102,15 +105,15 @@ with open(os.path.join(distname, "versions.py"), "w") as f:
 lup_ext_mod = setuptools.Extension(f"{distname}.{interface_name}",
     sources=[f"{distname}/{interface_name}/lup.c"],
     include_dirs=[info["include"]],
-    libraries=[info["lib"]],
-    library_dirs=[info["libdir"]])
+    extra_objects=[info["static_lib_path"]])
+    #libraries=[info["lib"]],
+    #library_dirs=[info["libdir"]])
 
 setup_args = dict(name=distname,
     description=description,
     url="https://github.com/tomstitt/lupyter",
     license="MIT",
     version="1.0.0",
-    #packages=[distname],
     packages=setuptools.find_packages(),
     ext_modules=[lup_ext_mod],
     install_requires=["ipykernel", "jupyter_core"])
