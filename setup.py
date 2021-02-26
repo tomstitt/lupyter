@@ -1,4 +1,3 @@
-#from distutils.core import setup, Extension
 import setuptools
 import os
 import sys
@@ -9,7 +8,7 @@ distname = "lupyter"
 description = "A Lua Jupyter Kernel using ipykernel"
 
 here = os.path.abspath(os.path.dirname(__file__))
-interface_name = "c_interface"
+interface_name = "clua"
 lua_dir = "/usr/local"
 prefer = "lua"
 
@@ -29,7 +28,7 @@ def find_lua(root):
         return None
     name = "Lua"
     with open(os.path.join(include, "lua.h")) as f:
-        version = re.match(r"#define LUA_RELEASE.*\"Lua ([0-9\. ]+)", f.read())
+        version = re.findall(r"#define LUA_RELEASE.*\"Lua ([0-9\. ]+)", f.read())[0]
         name = "Lua " + version
 
     return {"display_name": name,
@@ -67,8 +66,6 @@ def find_luajit(root):
 
 
 info = find_lua(lua_dir) or find_luajit(lua_dir)
-with open(os.path.join(distname, "version.py", "w")) as f:
-    f.write(f"version = \"{info["version"]}\"")
 
 if info is None:
     sys.exit(f"fatal: unable to find Lua in {lua_dir}, please set LUA_DIR to a valid install root")
@@ -76,6 +73,9 @@ else:
     print("found lua:")
     for k,v in info.items():
         print(f"  {k}: {v}")
+
+with open(os.path.join(distname, "versions.py"), "w") as f:
+    f.write(f'lua_version = "{info["version"]}"')
 
 lup_ext_mod = setuptools.Extension(f"{distname}.{interface_name}",
     sources=[f"{distname}/{interface_name}/lup.c"],

@@ -338,7 +338,7 @@ static PyMethodDef pylua_methods[] = {
 
 static PyTypeObject PyLuaStateType = {
   PyVarObject_HEAD_INIT(NULL, 0)
-  .tp_name = "lupyter.c_interface.LuaState",
+  .tp_name = "lupyter.clua.LuaState",
   .tp_doc = "(print_callback: (str) -> None) -> new LuaState",
   .tp_basicsize = sizeof(PyLuaState),
   .tp_flags = Py_TPFLAGS_DEFAULT,
@@ -349,7 +349,7 @@ static PyTypeObject PyLuaStateType = {
 };
 
 
-#define MOD_NAME "lupyter.c_interface"
+#define MOD_NAME "lupyter.clua"
 #define MOD_DOC "Lua Python Object"
 #ifdef PY3
 static PyModuleDef lup_module = {
@@ -363,9 +363,9 @@ static PyModuleDef lup_module = {
 
 PyMODINIT_FUNC
 #if defined (PY3)
-PyInit_c_interface()
+PyInit_clua()
 #elif defined (PY2)
-initc_interface()
+initclua()
 #endif
 {
   if (PyType_Ready(&PyLuaStateType) < 0) { return PyMODINIT_RET(NULL); }

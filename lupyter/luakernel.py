@@ -1,8 +1,10 @@
 from ipykernel.kernelbase import Kernel
-
 from .clua import LuaState
-from .version import version
 
+try:
+    from .versions import lua_version
+except ImportError:
+    lua_version = "5.1.0"
 
 class LuaKernel(Kernel):
     implementation = "iPython"
@@ -11,7 +13,7 @@ class LuaKernel(Kernel):
     language_info = {
         "name": "lua",
         "file_extension": ".lua",
-        "version": version,
+        "version": lua_version,
         "mimetype": "text/x-lua"
     }
 
