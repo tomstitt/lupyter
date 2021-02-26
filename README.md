@@ -1,10 +1,11 @@
 # A Lua Kernel for Jupyter
 
 Lupyter is a Lua kernel based on ipykernel.
+Tab-complete is available but documentation lookup is still a work in progress.
 
 ## Installing
 
-In most cases it's enougth to `pip install` while specifying your
+In most cases it's enough to `pip install` while specifying your
 lua root if it isn't in your path.
 
 ```
