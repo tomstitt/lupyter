@@ -1,6 +1,7 @@
 from ipykernel.kernelbase import Kernel
 
-from .c_interface import LuaState
+from .clua import LuaState
+from .version import version
 
 
 class LuaKernel(Kernel):
@@ -10,7 +11,7 @@ class LuaKernel(Kernel):
     language_info = {
         "name": "lua",
         "file_extension": ".lua",
-        "version": "5",
+        "version": version,
         "mimetype": "text/x-lua"
     }
 

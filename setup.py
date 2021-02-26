@@ -1,9 +1,14 @@
-from distutils.core import setup, Extension
+#from distutils.core import setup, Extension
+import setuptools
 import os
 import sys
 import fnmatch
+import re
 
 distname = "lupyter"
+description = "A Lua Jupyter Kernel using ipykernel"
+
+here = os.path.abspath(os.path.dirname(__file__))
 interface_name = "c_interface"
 lua_dir = "/usr/local"
 prefer = "lua"
@@ -12,7 +17,7 @@ if "LUA_DIR" in os.environ:
     lua_dir = os.environ["LUA_DIR"]
 
 if not os.path.exists(lua_dir):
-    sys.exit("fatal: {} doesn't exist, please set LUA_DIR to a Lua install root")
+    sys.exit(f"fatal: {lua_dir} doesn't exist, please set LUA_DIR to a Lua install root")
 
 
 def find_lua(root):
@@ -22,8 +27,17 @@ def find_lua(root):
         return None
     if not os.path.exists(os.path.join(libdir, "liblua.a")):
         return None
+    name = "Lua"
+    with open(os.path.join(include, "lua.h")) as f:
+        version = re.match(r"#define LUA_RELEASE.*\"Lua ([0-9\. ]+)", f.read())
+        name = "Lua " + version
 
-    return {"name": "lua", "include": include, "libdir": libdir, "lib": "lua"}
+    return {"display_name": name,
+            "kernel_name": name.lower().replace(" ", "_").replace(".", "_"),
+            "version": version,
+            "include": include,
+            "libdir": libdir,
+            "lib": "lua"}
 
 
 def find_luajit(root):
@@ -52,22 +66,66 @@ def find_luajit(root):
     return {"name": "luajit", "include": include, "libdir": libdir, "lib": lib}
 
 
-info = find_lua(lua_dir)
-if info is None:
-    info = find_luajit(lua_dir)
+info = find_lua(lua_dir) or find_luajit(lua_dir)
+with open(os.path.join(distname, "version.py", "w")) as f:
+    f.write(f"version = \"{info["version"]}\"")
 
 if info is None:
-    sys.exit("fatal: unable to find Lua in {}, please set LUA_DIR to a valid install root".format(lua_dir))
+    sys.exit(f"fatal: unable to find Lua in {lua_dir}, please set LUA_DIR to a valid install root")
 else:
-    print("found {}".format(info["name"]))
+    print("found lua:")
+    for k,v in info.items():
+        print(f"  {k}: {v}")
 
-lup_ext_mod = Extension("{}.{}".format(distname, interface_name),
-    sources=["{}/{}/lup.c".format(distname, interface_name)],
+lup_ext_mod = setuptools.Extension(f"{distname}.{interface_name}",
+    sources=[f"{distname}/{interface_name}/lup.c"],
     include_dirs=[info["include"]],
     libraries=[info["lib"]],
     library_dirs=[info["libdir"]])
 
-setup(name=distname,
-    version="1.0",
-    packages=[distname],
-    ext_modules=[lup_ext_mod])
+setup_args = dict(name=distname,
+    description=description,
+    url="https://github.com/tomstitt/lupyter",
+    license="MIT",
+    version="1.0.0",
+    #packages=[distname],
+    packages=setuptools.find_packages(),
+    ext_modules=[lup_ext_mod],
+    install_requires=["ipykernel", "jupyter_core"])
+
+
+# Inspired by https://github.com/ipython/ipykernel/blob/master/setup.py
+if any(arg.startswith(("bdist", "install")) for arg in sys.argv):
+    from ipykernel.kernelspec import write_kernel_spec
+    from jupyter_core.paths import jupyter_path
+    from glob import glob
+    import shutil
+
+    kernelspec_dir = "data_kernelspec"
+    dest = os.path.join(here, kernelspec_dir)
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
+
+    argv = [sys.executable, "-m", f"{distname}.luakernel", "-f", "{connection_file}"]
+    write_kernel_spec(dest, overrides={
+        "argv": argv,
+        "display_name": info["display_name"],
+        "language": "lua"
+    })
+
+    possible_kernel_dirs = jupyter_path()
+    search_dir = os.path.join(sys.prefix, "share", "jupyter")
+    if search_dir not in possible_kernel_dirs:
+        print(f"The target kernel directory ({search_dir}) will not be picked up by Jupyter, "
+              f"please manually install {kernelspec_dir} with: ")
+        print(f"jupyter-kernelspec install {kernelspec_dir} --sys-prefix --name {info['kernel_name']}")
+    else:
+        setup_args["data_files"] = [
+            (
+                os.path.join("share", "jupyter", "kernels", info["kernel_name"]),
+                glob(os.path.join(kernelspec_dir, "*"))
+            )
+        ]
+        print(setup_args["data_files"])
+
+setuptools.setup(**setup_args)
