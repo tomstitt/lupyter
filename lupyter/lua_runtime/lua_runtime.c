@@ -178,7 +178,7 @@ int complete(lua_State * L, const char * code, int cursor_pos, PyObject * py_mat
     match_count = table_matches(L, -1, identifier, identifier_length, py_matches);
 
     // check for reserved word match
-    for (int i = 0; i < sizeof(reserved_words)/sizeof(reserved_words[0]); ++i) {
+    for (unsigned i = 0; i < sizeof(reserved_words)/sizeof(reserved_words[0]); ++i) {
       if (strncmp(identifier, reserved_words[i], identifier_length) == 0) {
         match_count++;
         PyList_Append(py_matches, PyUnicode_FromString(reserved_words[i]));
@@ -191,6 +191,7 @@ int complete(lua_State * L, const char * code, int cursor_pos, PyObject * py_mat
 
 static void py_print(PyObject * py_print_cbk, const char * str) {
   PyObject * args = Py_BuildValue("(s)", str);
+  // TODO: depricated
   PyObject * result = PyEval_CallObject(py_print_cbk, args);
   Py_DECREF(args);
   Py_DECREF(result);
@@ -239,11 +240,11 @@ typedef struct {
   PyObject_HEAD // ';' isn't need, it can cause compiler issues
   lua_State * L;
   PyObject * py_print_cbk;
-} PyLuaState;
+} PyLuaRuntime;
 
 
 static PyObject * lua_new(PyTypeObject * type, PyObject * args, PyObject * kwargs) {
-  PyLuaState * self = (PyLuaState *)type->tp_alloc(type, 0);
+  PyLuaRuntime * self = (PyLuaRuntime *)type->tp_alloc(type, 0);
   if (self != NULL) {
     self->L = NULL;
     self->py_print_cbk = NULL;
@@ -253,7 +254,7 @@ static PyObject * lua_new(PyTypeObject * type, PyObject * args, PyObject * kwarg
 }
 
 
-static int lua_init(PyLuaState * self, PyObject * args, PyObject * kwargs) {
+static int lua_init(PyLuaRuntime * self, PyObject * args, PyObject * kwargs) {
   PyObject * cbk = NULL;
   if (!PyArg_ParseTuple(args, "|O", &cbk)) {
     return -1;
@@ -290,14 +291,14 @@ static int lua_init(PyLuaState * self, PyObject * args, PyObject * kwargs) {
 }
 
 
-static void lua_dealloc(PyLuaState * self) {
+static void lua_dealloc(PyLuaRuntime * self) {
   if (self->L) { lua_close(self->L); }
   Py_XDECREF(self->py_print_cbk);
   Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 
-static PyObject * lua_eval(PyLuaState * self, PyObject * args) {
+static PyObject * lua_eval(PyLuaRuntime * self, PyObject * args) {
   const char * code;
   if (!PyArg_ParseTuple(args, "s", &code)) {
     return NULL;
@@ -308,7 +309,7 @@ static PyObject * lua_eval(PyLuaState * self, PyObject * args) {
 }
 
 
-static PyObject * lua_complete(PyLuaState * self, PyObject * args) {
+static PyObject * lua_complete(PyLuaRuntime * self, PyObject * args) {
   const char * code;
   int cursor_pos = -1;
   if (!PyArg_ParseTuple(args, "s|i", &code, &cursor_pos)) {
@@ -336,11 +337,11 @@ static PyMethodDef pylua_methods[] = {
 };
 
 
-static PyTypeObject PyLuaStateType = {
+static PyTypeObject PyLuaRuntimeType = {
   PyVarObject_HEAD_INIT(NULL, 0)
-  .tp_name = "lupyter.clua.LuaState",
-  .tp_doc = "(print_callback: (str) -> None) -> new LuaState",
-  .tp_basicsize = sizeof(PyLuaState),
+  .tp_name = "lupyter.lua_runime.LuaRuntime",
+  .tp_doc = "(print_callback: (str) -> None) -> new LuaRuntime",
+  .tp_basicsize = sizeof(PyLuaRuntime),
   .tp_flags = Py_TPFLAGS_DEFAULT,
   .tp_new = lua_new,
   .tp_init = (initproc)lua_init,
@@ -349,8 +350,8 @@ static PyTypeObject PyLuaStateType = {
 };
 
 
-#define MOD_NAME "lupyter.clua"
-#define MOD_DOC "Lua Python Object"
+#define MOD_NAME "lupyter.lua_runtime"
+#define MOD_DOC "Lua runtime wrapper for executing and completing Lua blobs"
 #ifdef PY3
 static PyModuleDef lup_module = {
   PyModuleDef_HEAD_INIT,
@@ -363,12 +364,12 @@ static PyModuleDef lup_module = {
 
 PyMODINIT_FUNC
 #if defined (PY3)
-PyInit_clua()
+PyInit_lua_runtime()
 #elif defined (PY2)
-initclua()
+initlua_runtime()
 #endif
 {
-  if (PyType_Ready(&PyLuaStateType) < 0) { return PyMODINIT_RET(NULL); }
+  if (PyType_Ready(&PyLuaRuntimeType) < 0) { return PyMODINIT_RET(NULL); }
 
 #if defined (PY3)
   PyObject * m = PyModule_Create(&lup_module);
@@ -377,7 +378,7 @@ initclua()
 #endif
   if (m == NULL) { return PyMODINIT_RET(NULL); }
 
-  Py_INCREF(&PyLuaStateType);
-  PyModule_AddObject(m, "LuaState", (PyObject *)&PyLuaStateType);
+  Py_INCREF(&PyLuaRuntimeType);
+  PyModule_AddObject(m, "LuaRuntime", (PyObject *)&PyLuaRuntimeType);
   PyMODINIT_RET(return m;)
 }
