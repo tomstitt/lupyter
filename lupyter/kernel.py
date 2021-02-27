@@ -1,5 +1,5 @@
 from ipykernel.kernelbase import Kernel
-from .clua import LuaState
+from .lua_runtime import LuaRuntime
 
 try:
     from .versions import lua_version
@@ -24,14 +24,14 @@ class LuaKernel(Kernel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.luastate = LuaState(lambda text: self.stdout(text))
+        self.lua = LuaRuntime(lambda text: self.stdout(text))
 
     def do_execute(self, code, silent, store_history=True, user_expression=None, allow_stdin=False):
         # TODO: doc lookup
         if code.startswith("?") or code.endswith("?"):
             pass
         else:
-            self.luastate.eval(code)
+            self.lua.eval(code)
 
         return {
             "status": "ok",
@@ -41,7 +41,7 @@ class LuaKernel(Kernel):
         }
 
     def do_complete(self, code, cursor_pos):
-        matches, cursor_start = self.luastate.complete(code, cursor_pos)
+        matches, cursor_start = self.lua.complete(code, cursor_pos)
         return {
             "status": "ok",
             "matches": matches,
