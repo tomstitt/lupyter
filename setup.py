@@ -10,12 +10,6 @@ description = "A Lua Jupyter Kernel using ipykernel"
 
 here = os.path.abspath(os.path.dirname(__file__))
 interface_name = "lua_runtime"
-lua_dir = "/usr/local"
-
-if "LUA_DIR" in os.environ:
-    lua_dir = os.environ["LUA_DIR"]
-if not os.path.exists(lua_dir):
-    sys.exit(f"fatal: {lua_dir} doesn't exist, please set LUA_DIR to a Lua install root")
 
 
 def get_lua_release(path):
@@ -82,11 +76,28 @@ def find_luajit(root):
             "lib_dir": lib_dir,
             "lib": lib}
 
-
-info = find_lua(lua_dir) or find_luajit(lua_dir)
+if "LUA_DIR" in os.environ:
+    lua_dir = os.environ["LUA_DIR"]
+    if not os.path.exists(lua_dir):
+        sys.exit(f"fatal: {LUA_DIR} is not a valid path")
+    info = find_lua(lua_dir) or find_luajit(lua_dir)
+else:
+    paths = os.environ["PATH"]
+    paths_tried = set()
+    for p in paths.split(":"):
+        p = "/".join(p.split("/")[:-1])
+        if p == "": p = "/"
+        if p in paths_tried: continue
+        paths_tried.add(p)
+        print(f"looking for existing lua installation in {p}... ", end="")
+        info = find_lua(p) or find_luajit(p)
+        if info is not None:
+            print("found!")
+            break
+        print("unsuccessful")
 
 if info is None:
-    sys.exit(f"fatal: unable to find Lua in {lua_dir}, please set LUA_DIR to a valid install root")
+    sys.exit(f"fatal: unable to find Lua please set LUA_DIR to a valid install root")
 else:
     print("found lua:")
     for k,v in info.items():
