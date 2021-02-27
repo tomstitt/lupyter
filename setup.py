@@ -148,7 +148,9 @@ if any(arg.startswith(("bdist", "install")) for arg in sys.argv):
     else:
         setup_args["data_files"] = [
             (
-                os.path.join("share", "jupyter", "kernels", info["kernel_name"]),
+                # could use info["kernel_name"] for many kernels if Python package
+                # name also changed
+                os.path.join("share", "jupyter", "kernels", distname),
                 glob(os.path.join(kernelspec_dir, "*"))
             )
         ]
